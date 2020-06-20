@@ -1,0 +1,99 @@
+'Starting this party
+Sub Ticker()
+
+'Declaring all my data variables
+Dim TickerName As String
+Dim OpeningPrice As Double
+Dim ClosingPrice As Double
+Dim YearChange As Double
+Dim PercentChange As Double
+Dim GreatPInc As Double
+Dim GreatPDec As Double
+Dim VolumeTotal As Variant
+Dim GreatTotV As Variant
+Dim i As Variant
+Dim ws As Worksheet
+
+'Declaring my row counter variable
+Dim TickerTable As Variant
+
+'Looping through all the worksheets
+For Each ws In Worksheets
+'Setting all the column headings
+    ws.Range("I1").Value = "Ticker"
+    ws.Range("J1").Value = "Yearly Change"
+    ws.Range("K1").Value = "Percent Change"
+    ws.Range("L1").Value = "Total Stock Volume"
+    ws.Range("P1").Value = "Ticker"
+    ws.Range("Q1").Value = "Value"
+    ws.Range("O2").Value = "Greatest % Increase"
+    ws.Range("O3").Value = "Greatest % Decrease"
+    ws.Range("O4").Value = "Greatest Total Volume"
+    
+'Setting all the opening data values
+    TickerTable = 2
+    OpeningPrice = ws.Cells(2, 3).Value
+    
+'Figuring out the last row in the worksheet
+    LastRow = ws.Cells(Rows.Count, 1).End(xlUp).Row
+
+'Starting Loop with if statement assessing what to do when last row of a ticker's data is reached and next row is a new ticker
+    For i = 2 To LastRow
+        If ws.Cells(i + 1, 1).Value <> ws.Cells(i, 1).Value Then
+            'First we get the Ticker name info
+            TickerName = ws.Cells(i, 1).Value
+            ws.Range("I" & TickerTable).Value = TickerName
+            'Then we get the final closing price for the Ticker
+            ClosingPrice = ws.Cells(i, 6).Value
+            'Then we can calculate the YearChange info
+            YearChange = ClosingPrice - OpeningPrice
+            ws.Range("J" & TickerTable).Value = YearChange
+            'Now we have to assign a color to the cell depending on whether it is a positive or negative value w/ an if conditional
+                If YearChange >= 0 Then
+                    ws.Range("J" & TickerTable).Interior.ColorIndex = 4
+                ElseIf YearChange < 0 Then
+                    ws.Range("J" & TickerTable).Interior.ColorIndex = 3
+                End If
+            'Now we calculate PercentChange info with the YearChange data & update column style to reflect percent
+                If ClosingPrice = 0 Then
+                    PercentChange = 0
+                Else
+                    PercentChange = YearChange / ClosingPrice
+                End If
+            ws.Range("K" & TickerTable).Value = PercentChange
+            ws.Range("K" & TickerTable).Style = "percent"
+            'Now we calculate the VolumeTotal for the whole year
+            VolumeTotal = VolumeTotal + ws.Cells(i, 7).Value
+            ws.Range("L" & TickerTable).Value = VolumeTotal
+            'Update the TickerTable to move onto the next row
+            TickerTable = TickerTable + 1
+            'Reset all data variables
+            OpeningPrice = 0
+            ClosingPrice = 0
+            YearChange = 0
+            PercentChange = 0
+            VolumeTotal = 0
+            'Get the first initial OpeningPrice for the next Ticker Data
+            OpeningPrice = ws.Cells(i + 1, 3).Value
+           Else
+           'Since we are within the same Ticker we just want to aggregate the VolumeTotal
+             VolumeTotal = VolumeTotal + ws.Cells(i, 7).Value
+        End If
+    Next i
+    'Now I get my table info before the next iteration goes onto the next worksheet!
+    PercentRange = ws.Range("K2:K" & LastRow)
+    GreatPInc = WorksheetFunction.Max(PercentRange)
+    ws.Cells(2, 17).Value = GreatPInc
+    ws.Cells(2, 17).Style = "percent"
+    GreatPDec = WorksheetFunction.Min(PercentRange)
+    ws.Cells(3, 17).Value = GreatPDec
+    ws.Cells(3, 17).Style = "percent"
+    VolumeRange = ws.Range("L2:L" & LastRow)
+    GreatTotV = WorksheetFunction.Max(VolumeRange)
+    ws.Cells(4, 17).Value = GreatTotV
+    
+   'Now I appease my insatiable OCD and autofit all columns so that it looks presentable b/c we are nothing if not professionals!
+    ws.Range("I:Q").Columns.AutoFit
+  Next ws
+End Sub
+'Party's over, Go Home!
